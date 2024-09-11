@@ -27,10 +27,3 @@ Make sure you have the following installed:
 
 - **Node.js**: [Download and Install Node.js](https://nodejs.org/)
 - **npm**: Comes with Node.js
-
-### Steps
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/your-username/realtime-code-sharing-platform.git
