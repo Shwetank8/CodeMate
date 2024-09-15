@@ -120,13 +120,19 @@ const EditorPage = () => {
         </button>
       </div>
       <div className="editorWrap">
-        <Editor
-          socketRef={socketRef}
-          roomId={roomId}
-          onCodeChange={(code) => {
-            codeRef.current = code;
-          }}
-        />
+      <Editor
+        socketRef={socketRef}
+        roomId={roomId}
+        onCodeChange={(code) => {
+          codeRef.current = code;
+          // Emit code change event to the room
+          socketRef.current.emit(ACTIONS.CODE_CHANGE, {
+            roomId,
+            code,
+          });
+        }}
+      />
+
       </div>
     </div>
   );

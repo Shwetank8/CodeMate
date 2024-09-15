@@ -50,9 +50,12 @@ io.on('connection', (socket) => {
     });
 
     // Handle code change event
+    // Handle code change event
     socket.on(ACTIONS.CODE_CHANGE, ({ roomId, code }) => {
-        socket.in(roomId).emit(ACTIONS.CODE_CHANGE, { code });
+        // Broadcast code changes to all clients in the room, including the sender
+        io.in(roomId).emit(ACTIONS.CODE_CHANGE, { code });
     });
+
 
     // Handle code sync event
     socket.on(ACTIONS.SYNC_CODE, ({ socketId, code }) => {

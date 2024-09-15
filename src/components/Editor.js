@@ -4,59 +4,61 @@ import 'codemirror/lib/codemirror.css';
 import 'codemirror/theme/dracula.css';
 import 'codemirror/mode/javascript/javascript';
 import 'codemirror/addon/edit/closetag';
-import 'codemirror/addon/edit/closebrackets';
+
 import ACTIONS from '../Actions';
 
 const Editor = ({ socketRef, roomId, onCodeChange }) => {
     const editorRef = useRef(null);
 
     useEffect(() => {
-        async function init() {
-            // Initialize the CodeMirror editor
-            editorRef.current = Codemirror.fromTextArea(
-                document.getElementById('realtimeEditor'),
-                {
-                    mode: { name: 'javascript', json: true },
-                    theme: 'dracula',
-                    autoCloseTags: true,
-                    autoCloseBrackets: true,
-                    lineNumbers: true,
-                }
-            );
+        // Initialize the CodeMirror editor
+        editorRef.current = Codemirror.fromTextArea(
+            document.getElementById('realtimeEditor'),
+            {
+                mode: { name: 'javascript', json: true },
+                theme: 'dracula',
+                autoCloseTags: true,
+                autoCloseBrackets: true,
+                lineNumbers: true,
+            }
+        );
 
-            // On change event
-            editorRef.current.on('change', (instance, changes) => {
-                const { origin } = changes;
-                const code = instance.getValue();
-                onCodeChange(code);  // Notify parent component about code change
+        // Handle code change event
+        editorRef.current.on('change', (instance, changes) => {
+            const { origin } = changes;
+            const code = instance.getValue();
 
-                if (origin !== 'setValue') {
-                    socketRef.current.emit(ACTIONS.CODE_CHANGE, {
-                        roomId,
-                        code,
-                    });
-                }
-            });
-        }
-        init();
-    }, []);  // Add relevant dependencies
+            // Emit code change only if the origin is not setValue (to prevent loops)
+            if (origin !== 'setValue') {
+                socketRef.current.emit(ACTIONS.CODE_CHANGE, {
+                    roomId,
+                    code,
+                });
+            }
+
+            // Notify the parent component
+            onCodeChange(code);
+        });
+    }, []); // Empty dependency array since initialization happens once
 
     useEffect(() => {
+        // Listen for code changes from the server
         if (socketRef.current) {
             socketRef.current.on(ACTIONS.CODE_CHANGE, ({ code }) => {
-                if (code !== null && code !== editorRef.current.getValue()) {
+                // Set code only if different to prevent overwriting user's local edits
+                if (code !== editorRef.current.getValue()) {
                     editorRef.current.setValue(code);
                 }
             });
         }
 
+        // Cleanup the event listener on unmount
         return () => {
-            // Defensive check to ensure socketRef.current exists
             if (socketRef.current) {
                 socketRef.current.off(ACTIONS.CODE_CHANGE);
             }
         };
-    }, [socketRef, roomId]);  // Remove `.current` from dependencies, use `socketRef`
+    }, [socketRef, roomId]); // socketRef and roomId can change
 
     return <textarea id="realtimeEditor"></textarea>;
 };
